@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const { pool } = require("../config/db");
 
 router.post("/signup", async (req, res) => {
-    console.log("📌 req.body:", req.body); // 디버깅용 로그 추가
 
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
