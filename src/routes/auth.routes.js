@@ -4,7 +4,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { pool } = require("../config/db");
 
-// 회원가입 API
 router.post("/signup", async (req, res) => {
     console.log("📌 req.body:", req.body); // 디버깅용 로그 추가
 
