@@ -18,7 +18,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_DB: login_sign_up
-          POSTGRES_HOST_AUTH_METHOD: trust  # 비밀번호 없이 로그인 허용
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -52,6 +52,17 @@ jobs:
           done
           echo "❌ PostgreSQL failed to start"
           exit 1
+
+      - name: Initialize Database Schema
+        run: |
+          PGPASSWORD="" psql -h localhost -U postgres -d login_sign_up -c "
+          CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(50) NOT NULL,
+            email VARCHAR(100) UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );"
 
       - name: Run tests
         env:
