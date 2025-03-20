@@ -2,12 +2,14 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main", "dev" ]
+    branches:
+      - main
 
 jobs:
-  build_and_test:
+  build:
     runs-on: ubuntu-latest
 
     services:
@@ -15,52 +17,43 @@ jobs:
         image: postgres:13
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
           POSTGRES_DB: login_sign_up
+          POSTGRES_HOST_AUTH_METHOD: trust  # 비밀번호 없이 로그인 허용
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: "yarn"
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: yarn install --frozen-lockfile
-
-      - name: Create `.env.test` file
-        run: |
-          echo "DB_USER=postgres" > .env.test
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.test
-          echo "DB_HOST=localhost" >> .env.test
-          echo "DB_PORT=5432" >> .env.test
-          echo "DB_DATABASE=login_sign_up" >> .env.test
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.test
-          echo "PORT=5001" >> .env.test
 
       - name: Wait for PostgreSQL to be ready
         run: |
-          until pg_isready -h localhost -p 5432 -U postgres; do
-            echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U postgres; then
+              echo "✅ PostgreSQL is ready!"
+              exit 0
+            fi
+            echo "⏳ Waiting for PostgreSQL..."
             sleep 2
           done
+          echo "❌ PostgreSQL failed to start"
+          exit 1
 
-      - name: Run Database Migrations
-        run: yarn knex migrate:latest --env test
-
-      - name: Run Tests (Jest & Supertest)
-        run: NODE_ENV=test yarn test --passWithNoTests
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:5432/login_sign_up
+        run: yarn test
