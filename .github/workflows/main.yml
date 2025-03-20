@@ -19,7 +19,6 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_DB: login_sign_up
           POSTGRES_HOST_AUTH_METHOD: trust
-          JWT_SECRET: 771cb3ab5b068290efa1dbb6b2d193f52c995dddbffbab82f09907af426bc6179b526b94f0d8bf697391c8f6aae8562af0f5523c4b72fe95edb66876f1c56f85
         ports:
           - 5432:5432
         options: >-
@@ -68,4 +67,5 @@ jobs:
       - name: Run tests
         env:
           DATABASE_URL: postgresql://postgres@localhost:5432/login_sign_up
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}  # ✅ Node.js 환경에서 JWT_SECRET 설정
         run: yarn test
