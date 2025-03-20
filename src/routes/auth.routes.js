@@ -53,6 +53,7 @@ router.post("/login", async (req, res) => {
         }
 
         // JWT 토큰 발급
+        console.log("🔹 JWT_SECRET:", process.env.JWT_SECRET); // ✅ 추가
         const token = jwt.sign({ user_id: user.rows[0].id }, process.env.JWT_SECRET, { expiresIn: "2h" });
 
         res.json({ token });
